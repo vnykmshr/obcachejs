@@ -10,11 +10,20 @@ function keygen(name,args) {
   return sigmund(input,8);
 }
 
-function CacheError() {
+function CacheError(message) {
+  this.message = message || '';
   Error.captureStackTrace(this, CacheError);
 }
 
-util.inherits(CacheError,Error);
+util.inherits(CacheError, Error);
+CacheError.prototype.name = 'CacheError';
+
+function filterArgs(args, skipArgs) {
+  if (!skipArgs || !skipArgs.length) return args;
+  return args.filter(function(a, i) {
+    return skipArgs.indexOf(i) === -1;
+  });
+}
 
 
 var cache = {
@@ -119,14 +128,7 @@ var cache = {
           // we aren't resetting pending here, don't think we need to.
         }
 
-        if (skipArgs && skipArgs.length) {
-          keyArgs = args.filter(function(a, i) {
-            return skipArgs.indexOf(i) === -1;
-          });
-        } else {
-          keyArgs = args;
-        }
-
+        keyArgs = filterArgs(args, skipArgs);
         key = keygen(fname, keyArgs);
 
         log('fetching from cache ' + key);
@@ -166,11 +168,7 @@ var cache = {
               store.set(key,res);
             }
 
-            if (err && (err instanceof CacheError)) {
-              log('skipping from cache, overwriting error');
-              err = undefined;
-            } 
-            callback.call(self,err,res);
+            callback.call(self, err, res);
 
             // call any remaining callbacks
 
@@ -193,7 +191,7 @@ var cache = {
           });
 
           fn.apply(self,args);
-          return stats.miss++;
+          stats.miss++;
         }
 
       };
@@ -213,42 +211,32 @@ var cache = {
       if (!func || typeof(func) != 'function' || !func.cacheName) {
         throw new Error('Not an obcachejs function');
       }
-      
-      if (skipArgs && skipArgs.length) {
-        keyArgs = args.filter(function(a, i) {
-          return skipArgs.indexOf(i) === -1;
-        });
-      } else {
-        keyArgs = args;
-      }
 
+      keyArgs = filterArgs(args, skipArgs);
       fname = func.cacheName;
-      key = keygen(fname,keyArgs);
+      key = keygen(fname, keyArgs);
       log('warming up cache for ' + fname + ' with key ' + key);
-      store.set(key,res);
+      store.set(key, res);
     };
 
     this.invalidate = function(skipArgs) {
       var args = Array.prototype.slice.apply(arguments);
       var func = args.shift();
-      var fname,key,keyArgs;
+      var fname, key, keyArgs;
 
       if (!func || typeof(func) != 'function' || !func.cacheName) {
         throw new Error('Not an obcachejs function');
       }
-      
-      if (skipArgs && skipArgs.length) {
-        keyArgs = args.filter(function(a, i) {
-          return skipArgs.indexOf(i) === -1;
-        });
-      } else {
-        keyArgs = args;
-      }
 
+      keyArgs = filterArgs(args, skipArgs);
       fname = func.cacheName;
-      key = keygen(fname,keyArgs);
+      key = keygen(fname, keyArgs);
       log('invalidating cache for ' + fname + ' with key ' + key);
       store.expire(key);
+    };
+
+    this.isReady = function() {
+      return store.isReady();
     };
 
   },

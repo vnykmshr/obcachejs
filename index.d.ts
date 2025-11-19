@@ -15,6 +15,7 @@ declare module 'obcachejs' {
       url?: string;
       database?: number;
       twemproxy?: boolean;
+      connectTimeout?: number;
     };
     id?: number;
   }
@@ -40,6 +41,7 @@ declare module 'obcachejs' {
     ): CachedFunction<T> & ((...args: any[]) => Promise<any>);
     warmup(fn: CachedFunction<any>, ...args: any[]): void;
     invalidate(fn: CachedFunction<any>, ...args: any[]): void;
+    isReady(): boolean;
   }
 
   export function Create(options?: CacheOptions): Cache;

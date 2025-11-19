@@ -24,7 +24,11 @@ var redisStore = {
     if (url) {
       clientOptions.url = url;
     } else {
-      clientOptions.socket = { host: host, port: port };
+      clientOptions.socket = {
+        host: host,
+        port: port,
+        connectTimeout: options.redis.connectTimeout || 5000
+      };
     }
 
     if (options.redis.database !== undefined) {
@@ -35,13 +39,17 @@ var redisStore = {
 
     client = redis.createClient(clientOptions);
 
+    var connected = false;
+
     client.on('error', function(err) {
       debug('redis error ' + err);
+      connected = false;
     });
 
     // Connect to Redis (v4 requires explicit connect)
     client.connect().then(function() {
       debug('redis connected');
+      connected = true;
       if (!options.redis.twemproxy) {
         client.dbSize().then(function(size) {
           keylen = size;
@@ -51,6 +59,7 @@ var redisStore = {
       }
     }).catch(function(err) {
       debug('redis connect error ' + err);
+      connected = false;
     });
 
     if (options.redis.twemproxy) {
@@ -117,8 +126,9 @@ var redisStore = {
         if (options.redis.twemproxy) {
           throw new Error('Reset is not possible in twemproxy compat mode');
         }
-        client.flushDb().catch(function(err) {
+        return client.flushDb().catch(function(err) {
           debug('flushdb error ' + err);
+          throw err;
         });
       },
 
@@ -130,12 +140,11 @@ var redisStore = {
         if (options.redis.twemproxy) {
           return -1;
         }
-        client.dbSize().then(function(size) {
-          keylen = size;
-        }).catch(function(err) {
-          debug('dbsize error ' + err);
-        });
         return keylen;
+      },
+
+      isReady: function() {
+        return connected;
       }
     };
     return rcache;

@@ -27,19 +27,13 @@ const obcache = require('obcachejs');
 
 const cache = new obcache.Create({ max: 1000, maxAge: 60000 });
 
-// Wrap an async function
-async function fetchUser(id) {
-  const res = await fetch(`/api/users/${id}`);
-  return res.json();
-}
-
-const cachedFetch = cache.wrap(async (id, callback) => {
-  try {
-    const user = await fetchUser(id);
-    callback(null, user);
-  } catch (err) {
-    callback(err);
-  }
+// Wrap a callback-based function
+const cachedFetch = cache.wrap(function(id, callback) {
+  // Your async operation here
+  fetch(`/api/users/${id}`)
+    .then(res => res.json())
+    .then(data => callback(null, data))
+    .catch(err => callback(err));
 });
 
 // Use with async/await
@@ -60,9 +54,15 @@ const cache = new obcache.Create({
   id: 1, // required for Redis
   redis: {
     host: 'localhost',
-    port: 6379
+    port: 6379,
+    connectTimeout: 5000 // optional, default 5000ms
   }
 });
+
+// Check if Redis is connected
+if (cache.isReady()) {
+  console.log('Redis connected');
+}
 ```
 
 ## API
@@ -76,8 +76,12 @@ Creates a new cache instance.
 - `maxSize` - Maximum cache size in bytes (alternative to max)
 - `maxAge` - TTL in milliseconds
 - `queueEnabled` - Enable request deduplication
-- `redis` - Redis configuration `{ host, port, url, database }`
+- `redis` - Redis configuration `{ host, port, url, database, connectTimeout }`
 - `id` - Cache ID (required for Redis)
+
+### cache.isReady()
+
+Returns `true` if the cache store is ready (Redis connected, or LRU always ready).
 
 ### cache.wrap(fn, [thisobj], [skipArgs])
 

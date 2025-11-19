@@ -46,7 +46,9 @@ var lru = {
 
       expire: function(key, cb) {
         cache.delete(key);
-        cb && cb(null);
+        if (cb) {
+          process.nextTick(function() { cb(null); });
+        }
       },
 
       reset: function() {
@@ -63,6 +65,10 @@ var lru = {
 
       values: function() {
         return Array.from(cache.values());
+      },
+
+      isReady: function() {
+        return true;
       }
     };
 
