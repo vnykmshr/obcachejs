@@ -1,4 +1,4 @@
-# ObCache
+# obcachejs
 
 Object caching module for Node.js. Wraps async functions and caches their results with automatic key generation.
 
@@ -13,7 +13,7 @@ Object caching module for Node.js. Wraps async functions and caches their result
 ## Installation
 
 ```bash
-npm install obcache
+npm install obcachejs
 ```
 
 Requires Node.js 18+
@@ -23,7 +23,7 @@ Requires Node.js 18+
 ### Basic (async/await)
 
 ```javascript
-const obcache = require('obcache');
+const obcache = require('obcachejs');
 
 const cache = new obcache.Create({ max: 1000, maxAge: 60000 });
 

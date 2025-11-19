@@ -11,7 +11,7 @@
  * You can do so while creating, like this
  *
  * ```
- * var obcache = require('obcache');
+ * var obcache = require('obcachejs');
  * var cache = obcache.debug.register(new obcache.Create({ max: 100, maxAge: 300}),'mycache');
  * ```
  *

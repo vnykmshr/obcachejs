@@ -3,7 +3,7 @@
 
 var lru = require('./lru');
 var sigmund = require('sigmund');
-var log = require('debug')('obcache');
+var log = require('debug')('obcachejs');
 var util = require('util');
 
 function keygen(name,args) {
@@ -212,7 +212,7 @@ var cache = {
       var fname,key,keyArgs;
 
       if (!func || typeof(func) != 'function' || !func.cacheName) {
-        throw new Error('Not a obcache function');
+        throw new Error('Not an obcachejs function');
       }
       
       if (skipArgs && skipArgs.length) {
@@ -235,7 +235,7 @@ var cache = {
       var fname,key,keyArgs;
 
       if (!func || typeof(func) != 'function' || !func.cacheName) {
-        throw new Error('Not a obcache function');
+        throw new Error('Not an obcachejs function');
       }
       
       if (skipArgs && skipArgs.length) {

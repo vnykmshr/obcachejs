@@ -1,5 +1,5 @@
 {
-  "name": "obcache",
+  "name": "obcachejs",
   "version": "1.0.0",
   "description": "Object Caching with LRU and Redis support",
   "main": "index.js",

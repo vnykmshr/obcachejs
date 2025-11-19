@@ -1,4 +1,4 @@
-declare module 'obcache' {
+declare module 'obcachejs' {
   export interface CacheOptions {
     max?: number;
     maxSize?: number;

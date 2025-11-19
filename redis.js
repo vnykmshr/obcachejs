@@ -1,7 +1,7 @@
 "use strict";
 
 var redis = require('redis');
-var debug = require('debug')('obcache');
+var debug = require('debug')('obcachejs');
 
 var redisStore = {
 
