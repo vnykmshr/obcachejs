@@ -35,7 +35,6 @@
   "bugs": {
     "url": "https://github.com/vnykmshr/obcachejs/issues"
   },
-  "private": true,
   "keywords": [
     "cache",
     "lru",
