@@ -1,5 +1,10 @@
 # obcachejs
 
+[![npm version](https://img.shields.io/npm/v/obcachejs.svg)](https://www.npmjs.com/package/obcachejs)
+[![CI](https://github.com/vnykmshr/obcachejs/actions/workflows/test.yml/badge.svg)](https://github.com/vnykmshr/obcachejs/actions/workflows/test.yml)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/node/v/obcachejs.svg)](https://nodejs.org)
+
 Object caching for Node.js. Wraps async functions and caches results with automatic key generation.
 
 ## Features
@@ -182,6 +187,15 @@ const cache = new obcache.Create({ max: 100 });
 ```
 
 Types available: `Cache`, `CacheOptions`, `CacheStats`, `CachedFunction`.
+
+## Security
+
+- **Redis authentication**: Use the `url` option with credentials: `redis://user:pass@host:port`
+- **Secrets**: Never cache sensitive data (tokens, passwords, PII) without encryption
+- **Network**: Use TLS for Redis in production (`rediss://` protocol)
+- **Eviction**: Cached data persists until TTL expires or LRU evicts; plan accordingly
+
+Report security issues via GitHub issues with `[SECURITY]` prefix.
 
 ## License
 

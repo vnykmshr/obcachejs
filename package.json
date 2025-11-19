@@ -8,7 +8,7 @@
     "test": "mocha -R spec ./test/test.js",
     "lint": "eslint ."
   },
-  "author": "Vinay Kumar",
+  "author": "Vinayak Mishra",
   "contributors": [
     "Qasim Zaidi"
   ],
