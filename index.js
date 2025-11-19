@@ -150,29 +150,30 @@ var cache = {
 
       log('created cache function %s', fname);
       cachedfunc.cacheName = fname;
+      cachedfunc.skipArgs = skipArgs;
       return cachedfunc;
     };
 
-    this.warmup = function(skipArgs) {
+    this.warmup = function() {
       var args = Array.prototype.slice.apply(arguments);
       var func = args.shift();
       var res = args.pop();
 
       validateCacheFunction(func);
 
-      var keyArgs = filterArgs(args, skipArgs);
+      var keyArgs = filterArgs(args, func.skipArgs);
       var key = keygen(func.cacheName, keyArgs);
       log('warming cache %s key %s', func.cacheName, key);
       store.set(key, res);
     };
 
-    this.invalidate = function(skipArgs) {
+    this.invalidate = function() {
       var args = Array.prototype.slice.apply(arguments);
       var func = args.shift();
 
       validateCacheFunction(func);
 
-      var keyArgs = filterArgs(args, skipArgs);
+      var keyArgs = filterArgs(args, func.skipArgs);
       var key = keygen(func.cacheName, keyArgs);
       log('invalidating %s key %s', func.cacheName, key);
       store.expire(key);
