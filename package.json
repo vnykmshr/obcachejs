@@ -8,9 +8,9 @@
     "test": "mocha -R spec ./test/test.js",
     "lint": "eslint ."
   },
-  "author": "Vinay Kumar <vnykmshr@gmail.com>",
+  "author": "Vinay Kumar",
   "contributors": [
-    "Qasim Zaidi <qasim@zaidi.me>"
+    "Qasim Zaidi"
   ],
   "license": "BSD-3-Clause",
   "engines": {

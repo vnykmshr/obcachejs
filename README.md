@@ -26,14 +26,16 @@ const obcache = require('obcachejs');
 const cache = new obcache.Create({ max: 1000, maxAge: 60000 });
 
 const getUser = cache.wrap(function(id, callback) {
-  db.query('SELECT * FROM users WHERE id = ?', [id], callback);
+  // Simulate async database lookup
+  setTimeout(() => callback(null, { id, name: 'User ' + id }), 10);
 });
 
 // Promise style
 const user = await getUser(123);
+console.log(user); // { id: 123, name: 'User 123' }
 
 // Callback style
-getUser(123, (err, user) => console.log(user));
+getUser(456, (err, user) => console.log(user));
 ```
 
 ## API
@@ -170,13 +172,16 @@ With `queueEnabled`, concurrent calls with the same key are queued and resolved 
 
 ## TypeScript
 
-Type definitions are included. Import types:
+Type definitions are included.
 
 ```typescript
-import obcache, { Cache, CacheOptions, CacheStats } from 'obcachejs';
+const obcache = require('obcachejs');
+// or with ES modules: import obcache from 'obcachejs';
 
-const cache: Cache = new obcache.Create({ max: 100 });
+const cache = new obcache.Create({ max: 100 });
 ```
+
+Types available: `Cache`, `CacheOptions`, `CacheStats`, `CachedFunction`.
 
 ## License
 
