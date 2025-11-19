@@ -1,13 +1,13 @@
 # obcachejs
 
-Object caching module for Node.js. Wraps async functions and caches their results with automatic key generation.
+Object caching for Node.js. Wraps async functions and caches results with automatic key generation.
 
 ## Features
 
-- LRU in-memory cache with TTL
-- Optional Redis persistence
+- LRU in-memory cache with TTL support
+- Optional Redis backend for distributed caching
 - Request deduplication (prevents thundering herd)
-- Promise and callback support
+- Promise and callback APIs
 - TypeScript definitions included
 
 ## Installation
@@ -18,118 +18,164 @@ npm install obcachejs
 
 Requires Node.js 18+
 
-## Usage
-
-### Basic (async/await)
+## Quick Start
 
 ```javascript
 const obcache = require('obcachejs');
 
 const cache = new obcache.Create({ max: 1000, maxAge: 60000 });
 
-// Wrap a callback-based function
-const cachedFetch = cache.wrap(function(id, callback) {
-  // Your async operation here
-  fetch(`/api/users/${id}`)
-    .then(res => res.json())
-    .then(data => callback(null, data))
-    .catch(err => callback(err));
+const getUser = cache.wrap(function(id, callback) {
+  db.query('SELECT * FROM users WHERE id = ?', [id], callback);
 });
 
-// Use with async/await
-const user = await cachedFetch(123);
+// Promise style
+const user = await getUser(123);
 
-// Or with callbacks
-cachedFetch(123, (err, user) => {
-  console.log(user);
-});
-```
-
-### With Redis
-
-```javascript
-const cache = new obcache.Create({
-  max: 10000,
-  maxAge: 300000,
-  id: 1, // required for Redis
-  redis: {
-    host: 'localhost',
-    port: 6379,
-    connectTimeout: 5000 // optional, default 5000ms
-  }
-});
-
-// Check if Redis is connected
-if (cache.isReady()) {
-  console.log('Redis connected');
-}
+// Callback style
+getUser(123, (err, user) => console.log(user));
 ```
 
 ## API
 
 ### obcache.Create(options)
 
-Creates a new cache instance.
+Creates a cache instance.
 
-**Options:**
-- `max` - Maximum number of keys (default: 1000)
-- `maxSize` - Maximum cache size in bytes (alternative to max)
-- `maxAge` - TTL in milliseconds
-- `queueEnabled` - Enable request deduplication
-- `redis` - Redis configuration `{ host, port, url, database, connectTimeout }`
-- `id` - Cache ID (required for Redis)
+```javascript
+const cache = new obcache.Create({
+  max: 1000,           // max keys (default: 1000)
+  maxAge: 60000,       // TTL in ms
+  queueEnabled: true   // deduplicate concurrent requests
+});
+```
 
-### cache.isReady()
+Options:
 
-Returns `true` if the cache store is ready (Redis connected, or LRU always ready).
+| Option | Description |
+|--------|-------------|
+| `max` | Maximum number of cached keys |
+| `maxSize` | Maximum cache size in bytes (alternative to max) |
+| `maxAge` | Time-to-live in milliseconds |
+| `queueEnabled` | Enable request deduplication |
+| `dispose` | Function called when entries are evicted |
+| `reset.interval` | Auto-reset interval in ms |
+| `reset.firstReset` | First reset time (Date or ms) |
 
 ### cache.wrap(fn, [thisobj], [skipArgs])
 
-Wraps a function with caching. Returns a cached version that:
-- Returns a Promise when called without callback
-- Uses callback when provided as last argument
+Wraps a callback-based function with caching. The wrapped function:
+- Returns a Promise when called without a callback
+- Calls the callback when provided as last argument
+- Generates cache keys from function name and arguments
 
 ```javascript
-const cached = cache.wrap(myFunction);
+const cached = cache.wrap(myAsyncFn);
 
-// Promise style
-const result = await cached(arg1, arg2);
-
-// Callback style
-cached(arg1, arg2, (err, result) => {});
+// Exclude arguments from key generation
+const cached = cache.wrap(function(id, timestamp, cb) {
+  // timestamp won't affect cache key
+  cb(null, result);
+}, null, [1]);
 ```
-
-**skipArgs** - Array of argument indices to exclude from cache key generation.
 
 ### cache.warmup(fn, ...args, value)
 
-Pre-populate cache with a known value.
+Pre-populate cache for given arguments.
 
 ```javascript
-cache.warmup(cachedFetch, 123, { id: 123, name: 'cached' });
+cache.warmup(getUser, 123, { id: 123, name: 'Alice' });
 ```
 
 ### cache.invalidate(fn, ...args)
 
-Remove cached value for given arguments.
+Remove cached entry for given arguments.
 
 ```javascript
-cache.invalidate(cachedFetch, 123);
+cache.invalidate(getUser, 123);
 ```
+
+### cache.isReady()
+
+Returns true when cache backend is ready. Always true for LRU, waits for connection with Redis.
 
 ### cache.stats
 
-Object with cache statistics: `{ hit, miss, reset, pending }`
-
-### obcache.debug
-
-Debug interface for cache inspection.
+Cache statistics object.
 
 ```javascript
-obcache.debug.register(cache, 'myCache');
+{
+  hit: 0,      // cache hits
+  miss: 0,     // cache misses
+  reset: 0,    // number of resets
+  pending: 0   // queued requests
+}
+```
+
+## Redis Backend
+
+```javascript
+const cache = new obcache.Create({
+  max: 10000,
+  maxAge: 300000,
+  id: 1,  // required for Redis
+  redis: {
+    host: 'localhost',
+    port: 6379,
+    connectTimeout: 5000
+  }
+});
+
+// Wait for connection
+if (!cache.isReady()) {
+  // handle not ready
+}
+```
+
+Redis options:
+
+| Option | Description |
+|--------|-------------|
+| `host` | Redis host |
+| `port` | Redis port |
+| `url` | Connection URL (alternative to host/port) |
+| `database` | Redis database number |
+| `connectTimeout` | Connection timeout in ms (default: 5000) |
+| `twemproxy` | Enable twemproxy compatibility |
+
+## Debug Interface
+
+Register caches for inspection:
+
+```javascript
+obcache.debug.register(cache, 'users');
 
 // Express middleware
-app.get('/cache-debug', obcache.debug.view);
+app.get('/debug/cache', obcache.debug.view);
+
+// Console output
+obcache.debug.log();
+```
+
+## How It Works
+
+obcachejs generates cache keys by hashing the function name and serialized arguments using sigmund. When a wrapped function is called:
+
+1. Generate key from function name + arguments
+2. Check cache for existing value
+3. On hit: return cached value
+4. On miss: call original function, cache result, return
+
+With `queueEnabled`, concurrent calls with the same key are queued and resolved together, preventing duplicate work.
+
+## TypeScript
+
+Type definitions are included. Import types:
+
+```typescript
+import obcache, { Cache, CacheOptions, CacheStats } from 'obcachejs';
+
+const cache: Cache = new obcache.Create({ max: 100 });
 ```
 
 ## License
