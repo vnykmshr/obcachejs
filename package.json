@@ -26,11 +26,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/vnykmshr/obcache.git"
+    "url": "git://github.com/vnykmshr/obcachejs.git"
   },
-  "homepage": "https://github.com/vnykmshr/obcache#readme",
+  "homepage": "https://github.com/vnykmshr/obcachejs#readme",
   "bugs": {
-    "url": "https://github.com/vnykmshr/obcache/issues"
+    "url": "https://github.com/vnykmshr/obcachejs/issues"
   },
   "private": true,
   "keywords": [
